@@ -37,7 +37,7 @@
 
 Name:           werken-xpath
 Version:        0.9.4
-Release:        %mkrel 0.beta.12.0.0.1
+Release:        %mkrel 0.beta.12.0.0.2
 Epoch:          0
 Summary:        XPath implementation using JDOM
 License:        Apache Software License-like
@@ -64,13 +64,11 @@ Group:          Development/Java
 BuildArch:      noarch
 %endif
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-buildroot
-Provides:    werken.xpath = %{epoch}-%{version}-%{release}
-Obsoletes:   werken.xpath < %{epoch}-%{version}-%{release}
+Provides:    werken.xpath = %{epoch}:%{version}-%{release}
+Obsoletes:   werken.xpath < %{epoch}:%{version}-%{release}
 
 %if %{gcj_support}
 BuildRequires:		java-gcj-compat-devel
-Requires(post):		java-gcj-compat
-Requires(postun):	java-gcj-compat
 %endif
 
 %description
@@ -85,8 +83,8 @@ werken.canonical (XML canonicalization) packages.
 Summary:        Javadoc for %{name}
 Group:          Development/Java
 BuildRequires:  java-1.5.0-gcj-javadoc
-Provides:    werken.xpath-javadoc = %{epoch}-%{version}-%{release}
-Obsoletes:   werken.xpath-javadoc < %{epoch}-%{version}-%{release}
+Provides:    werken.xpath-javadoc = %{epoch}:%{version}-%{release}
+Obsoletes:   werken.xpath-javadoc < %{epoch}:%{version}-%{release}
 
 %description    javadoc
 Javadoc for %{name}.
