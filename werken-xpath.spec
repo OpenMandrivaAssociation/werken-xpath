@@ -37,11 +37,12 @@
 
 Name:           werken-xpath
 Version:        0.9.4
-Release:        %mkrel 0.beta.12.0.0.2
+Release:        %mkrel 0.beta.13.0.0.1
 Epoch:          0
 Summary:        XPath implementation using JDOM
 License:        Apache Software License-like
 Source0:        %{dotname}-%{version}-beta-src.tar.gz
+Source1:        %{name}-%{version}.pom
 Patch0:         %{name}-ElementNamespaceContext.patch
 Patch1:         %{name}-Partition.patch
 Patch2:         %{name}-ParentStep.patch
@@ -58,7 +59,7 @@ BuildRequires:  antlr
 BuildRequires:  jdom
 BuildRequires:  xerces-j2
 BuildRequires:  xml-commons-apis
-BuildRequires:  jpackage-utils >= 0:1.6
+BuildRequires:  jpackage-utils >= 0:1.7.2
 Group:          Development/Java
 %if ! %{gcj_support}
 BuildArch:      noarch
@@ -135,6 +136,11 @@ cp -p build/%{dotname}.jar $RPM_BUILD_ROOT%{_javadir}/%{name}-%{version}.jar
 (cd $RPM_BUILD_ROOT%{_javadir} && for jar in *-%{version}.jar; do ln -sf ${jar} `echo $jar| sed "s|-%{version}||g"`; done
 ln -sf %{name}.jar %{dotname}.jar)
 
+# pom
+mkdir -p $RPM_BUILD_ROOT%{_datadir}/maven2/default_poms
+cp %{SOURCE1} $RPM_BUILD_ROOT%{_datadir}/maven2/default_poms/JPP-werken-xpath.pom
+%add_to_maven_depmap %{name} %{name} %{version} JPP %{name}
+
 # javadoc
 mkdir -p $RPM_BUILD_ROOT%{_javadocdir}/%{name}-%{version}
 cp -pr build/apidocs/* $RPM_BUILD_ROOT%{_javadocdir}/%{name}-%{version}
@@ -148,11 +154,15 @@ ln -s %{name}-%{version} $RPM_BUILD_ROOT%{_javadocdir}/%{name}
 %clean
 rm -rf $RPM_BUILD_ROOT
 
-%if %{gcj_support}
 %post
+%update_maven_depmap
+%if %{gcj_support}
 %{update_gcjdb}
+%endif
 
 %postun
+%update_maven_depmap
+%if %{gcj_support}
 %{clean_gcjdb}
 %endif
 
@@ -160,6 +170,8 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(0644,root,root,0755)
 %doc INSTALL LICENSE LIMITATIONS README TODO
 %{_javadir}/*
+%{_datadir}/maven2/default_poms/*
+%{_mavendepmapfragdir}
 
 %if %{gcj_support}
 %dir %{_libdir}/gcj/%{name}
