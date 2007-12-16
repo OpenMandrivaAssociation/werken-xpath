@@ -37,7 +37,7 @@
 
 Name:           werken-xpath
 Version:        0.9.4
-Release:        %mkrel 0.beta.13.0.0.1
+Release:        %mkrel 0.beta.13.0.0.2
 Epoch:          0
 Summary:        XPath implementation using JDOM
 License:        Apache Software License-like
@@ -59,7 +59,7 @@ BuildRequires:  antlr
 BuildRequires:  jdom
 BuildRequires:  xerces-j2
 BuildRequires:  xml-commons-apis
-BuildRequires:  jpackage-utils >= 0:1.7.2
+BuildRequires:  java-rpmbuild >= 0:1.7.2
 Group:          Development/Java
 %if ! %{gcj_support}
 BuildArch:      noarch
