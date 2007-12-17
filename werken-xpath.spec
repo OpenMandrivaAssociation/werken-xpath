@@ -64,7 +64,6 @@ Group:          Development/Java
 %if ! %{gcj_support}
 BuildArch:      noarch
 %endif
-BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 Provides:    werken.xpath = %{epoch}:%{version}-%{release}
 Obsoletes:   werken.xpath < %{epoch}:%{version}-%{release}
 
