@@ -28,21 +28,17 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-%define _with_gcj_support 1
-%define gcj_support %{?_with_gcj_support:1}%{!?_with_gcj_support:%{?_without_gcj_support:0}%{!?_without_gcj_support:%{?_gcj_support:%{_gcj_support}}%{!?_gcj_support:0}}}
-
 %define dotname werken.xpath
-
-%define section free
 
 Name:           werken-xpath
 Version:        0.9.4
-Release:        %mkrel 0.beta.13.0.0.5
-Epoch:          0
+Release:        6.beta.12.4
 Summary:        XPath implementation using JDOM
-License:        Apache Software License-like
+# Worth noting that this ASL 1.1 has slightly different wording.
+# It may be GPL compatible as a result.
+License:        ASL 1.1
 Source0:        %{dotname}-%{version}-beta-src.tar.gz
-Source1:        %{name}-%{version}.pom
+Source1:        http://repo1.maven.org/maven2/%{name}/%{name}/%{version}/%{name}-%{version}.pom
 Patch0:         %{name}-ElementNamespaceContext.patch
 Patch1:         %{name}-Partition.patch
 Patch2:         %{name}-ParentStep.patch
@@ -59,18 +55,12 @@ BuildRequires:  antlr
 BuildRequires:  jdom
 BuildRequires:  xerces-j2
 BuildRequires:  xml-commons-apis
-BuildRequires:  java-rpmbuild >= 0:1.7.2
+BuildRequires:  jpackage-utils >= 0:1.6
 Group:          Development/Java
-%if ! %{gcj_support}
 BuildArch:      noarch
-%endif
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-buildroot
-Provides:    werken.xpath = %{epoch}:%{version}-%{release}
-Obsoletes:   werken.xpath < %{epoch}:%{version}-%{release}
-
-%if %{gcj_support}
-BuildRequires:		java-gcj-compat-devel
-%endif
+Provides:    werken.xpath = %{version}-%{release}
+Obsoletes:   werken.xpath < 0.9.4
 
 %description
 werken.xpath is an implementation of the W3C XPath Recommendation, on
@@ -83,9 +73,9 @@ werken.canonical (XML canonicalization) packages.
 %package        javadoc
 Summary:        Javadoc for %{name}
 Group:          Development/Java
-BuildRequires:  java-1.5.0-gcj-javadoc
-Provides:    werken.xpath-javadoc = %{epoch}:%{version}-%{release}
-Obsoletes:   werken.xpath-javadoc < %{epoch}:%{version}-%{release}
+BuildRequires:  java-javadoc
+Provides:    werken.xpath-javadoc = %{version}-%{release}
+Obsoletes:   werken.xpath-javadoc < 0.9.4
 
 %description    javadoc
 Javadoc for %{name}.
@@ -94,20 +84,22 @@ Javadoc for %{name}.
 
 %prep
 %setup -q -n %{dotname}
-%patch0 -b .sav
-%patch1 -b .sav
-%patch2 -b .sav
-%patch3 -b .sav
-%patch4 -b .sav
-%patch5 -b .sav
-%patch6 -b .sav
-%patch7 -b .sav
-%patch8 -b .sav
+%patch0 -p0 -b .sav
+%patch1 -p0 -b .sav
+%patch2 -p0 -b .sav
+%patch3 -p0 -b .sav
+%patch4 -p0 -b .sav
+%patch5 -p0 -b .sav
+%patch6 -p0 -b .sav
+%patch7 -p0 -b .sav
+%patch8 -p0 -b .sav
 
 # remove all binary libs
 for j in $(find . -name "*.jar"); do
 	mv $j $j.no
 done
+
+cp %{SOURCE1} .
 
 #pushd lib
 #ln -sf $(build-classpath antlr) antlr-runtime.jar
@@ -119,7 +111,7 @@ done
 
 %build
 export CLASSPATH=$(build-classpath jdom antlr xerces-j2 xml-commons-apis)
-%{ant} -Dbuild.compiler=modern package javadoc compile-test
+ant -Dbuild.compiler=modern package javadoc compile-test
 # Note that you'll have to java in PATH for this to work, it is by default
 # when using a JPackage JVM.
 CLASSPATH=$CLASSPATH:build/werken.xpath.jar:build/test/classes
@@ -132,55 +124,37 @@ rm -rf $RPM_BUILD_ROOT
 
 # jars
 mkdir -p $RPM_BUILD_ROOT%{_javadir}
-cp -p build/%{dotname}.jar $RPM_BUILD_ROOT%{_javadir}/%{name}-%{version}.jar
-(cd $RPM_BUILD_ROOT%{_javadir} && for jar in *-%{version}.jar; do ln -sf ${jar} `echo $jar| sed "s|-%{version}||g"`; done
-ln -sf %{name}.jar %{dotname}.jar)
-
-# pom
-mkdir -p $RPM_BUILD_ROOT%{_datadir}/maven2/default_poms
-cp %{SOURCE1} $RPM_BUILD_ROOT%{_datadir}/maven2/default_poms/JPP-werken-xpath.pom
-%add_to_maven_depmap %{name} %{name} %{version} JPP %{name}
+cp -p build/%{dotname}.jar $RPM_BUILD_ROOT%{_javadir}/%{name}.jar
 
 # javadoc
-mkdir -p $RPM_BUILD_ROOT%{_javadocdir}/%{name}-%{version}
-cp -pr build/apidocs/* $RPM_BUILD_ROOT%{_javadocdir}/%{name}-%{version}
-ln -s %{name}-%{version} $RPM_BUILD_ROOT%{_javadocdir}/%{name}
+mkdir -p $RPM_BUILD_ROOT%{_javadocdir}/%{name}
+cp -pr build/apidocs/* $RPM_BUILD_ROOT%{_javadocdir}/%{name}
+
+# maven
+install -d -m 755 $RPM_BUILD_ROOT%{_mavenpomdir}
+install -pm 644 %{name}-%{version}.pom \
+        $RPM_BUILD_ROOT%{_mavenpomdir}/JPP.%{name}.pom
+%add_to_maven_depmap %{name} %{name} %{version} JPP %{name}
+
+
 # -----------------------------------------------------------------------------
-
-%if %{gcj_support}
-%{_bindir}/aot-compile-rpm
-%endif
-
-%clean
-rm -rf $RPM_BUILD_ROOT
 
 %post
 %update_maven_depmap
-%if %{gcj_support}
-%{update_gcjdb}
-%endif
 
 %postun
 %update_maven_depmap
-%if %{gcj_support}
-%{clean_gcjdb}
-%endif
 
 %files
-%defattr(0644,root,root,0755)
+%defattr(-,root,root,-)
 %doc INSTALL LICENSE LIMITATIONS README TODO
 %{_javadir}/*
-%{_datadir}/maven2/default_poms/*
-%{_mavendepmapfragdir}
-
-%if %{gcj_support}
-%dir %{_libdir}/gcj/%{name}
-%attr(-,root,root) %{_libdir}/gcj/%{name}/werken-xpath-0.9.4.jar.*
-%endif
+%{_mavenpomdir}/*
+%{_mavendepmapfragdir}/*
 
 %files javadoc
-%defattr(0644,root,root,0755)
-%{_javadocdir}/%{name}-%{version}
+%defattr(-,root,root,-)
 %{_javadocdir}/%{name}
 
 # -----------------------------------------------------------------------------
+
