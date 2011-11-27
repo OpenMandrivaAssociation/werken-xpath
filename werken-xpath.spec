@@ -32,7 +32,7 @@
 
 Name:           werken-xpath
 Version:        0.9.4
-Release:        6.beta.12.4
+Release:        6.beta.12.6
 Summary:        XPath implementation using JDOM
 # Worth noting that this ASL 1.1 has slightly different wording.
 # It may be GPL compatible as a result.
