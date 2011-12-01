@@ -120,20 +120,20 @@ sh runtests.sh
 # -----------------------------------------------------------------------------
 
 %install
-rm -rf $RPM_BUILD_ROOT
+rm -rf %{buildroot}
 
 # jars
-mkdir -p $RPM_BUILD_ROOT%{_javadir}
-cp -p build/%{dotname}.jar $RPM_BUILD_ROOT%{_javadir}/%{name}.jar
+mkdir -p %{buildroot}%{_javadir}
+cp -p build/%{dotname}.jar %{buildroot}%{_javadir}/%{name}.jar
 
 # javadoc
-mkdir -p $RPM_BUILD_ROOT%{_javadocdir}/%{name}
-cp -pr build/apidocs/* $RPM_BUILD_ROOT%{_javadocdir}/%{name}
+mkdir -p %{buildroot}%{_javadocdir}/%{name}
+cp -pr build/apidocs/* %{buildroot}%{_javadocdir}/%{name}
 
 # maven
-install -d -m 755 $RPM_BUILD_ROOT%{_mavenpomdir}
+install -d -m 755 %{buildroot}%{_mavenpomdir}
 install -pm 644 %{name}-%{version}.pom \
-        $RPM_BUILD_ROOT%{_mavenpomdir}/JPP.%{name}.pom
+        %{buildroot}%{_mavenpomdir}/JPP.%{name}.pom
 %add_to_maven_depmap %{name} %{name} %{version} JPP %{name}
 
 
