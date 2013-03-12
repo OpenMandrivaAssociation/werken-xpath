@@ -56,6 +56,7 @@ URL:            http://sourceforge.net/projects/werken-xpath/
 Requires:       jdom
 BuildRequires:  ant >= 0:1.6
 BuildRequires:  antlr 
+BuildRequires:	antlr-java
 BuildRequires:  jdom
 BuildRequires:  xerces-j2
 BuildRequires:  xml-commons-apis
