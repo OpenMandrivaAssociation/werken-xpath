@@ -1,3 +1,4 @@
+%{?_javapackages_macros:%_javapackages_macros}
 # Copyright (c) 2000-2005, JPackage Project
 # All rights reserved.
 #
@@ -28,21 +29,18 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-%define _with_gcj_support 1
-%define gcj_support %{?_with_gcj_support:1}%{!?_with_gcj_support:%{?_without_gcj_support:0}%{!?_without_gcj_support:%{?_gcj_support:%{_gcj_support}}%{!?_gcj_support:0}}}
-
 %define dotname werken.xpath
-
-%define section free
 
 Name:           werken-xpath
 Version:        0.9.4
-Release:        0.beta.13.0.0.5
+Release:        12.beta.12.5.1%{?dist}
 Epoch:          0
 Summary:        XPath implementation using JDOM
-License:        Apache Software License-like
-Source0:        %{dotname}-%{version}-beta-src.tar.gz
-Source1:        %{name}-%{version}.pom
+License:        Saxpath
+Source0:        %{name}-%{version}.tar.xz
+Source1:        http://repo1.maven.org/maven2/%{name}/%{name}/%{version}/%{name}-%{version}.pom
+# used to generate Source0, upstream has no tarball like this anymore
+Source2:        generate-tarball.sh
 Patch0:         %{name}-ElementNamespaceContext.patch
 Patch1:         %{name}-Partition.patch
 Patch2:         %{name}-ParentStep.patch
@@ -55,23 +53,15 @@ Patch8:         %{name}-runtests_sh.patch
 URL:            http://sourceforge.net/projects/werken-xpath/
 Requires:       jdom
 BuildRequires:  ant >= 0:1.6
-BuildRequires:  antlr 
-BuildRequires:	antlr-java
+BuildRequires:  antlr
 BuildRequires:  jdom
 BuildRequires:  xerces-j2
 BuildRequires:  xml-commons-apis
-BuildRequires:  java-rpmbuild >= 0:1.7.2
-Group:          Development/Java
-%if ! %{gcj_support}
-BuildArch:      noarch
-%endif
-BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-buildroot
-Provides:    werken.xpath = %{epoch}:%{version}-%{release}
-Obsoletes:   werken.xpath < %{epoch}:%{version}-%{release}
+BuildRequires:  jpackage-utils >= 0:1.6
 
-%if %{gcj_support}
-BuildRequires:		java-gcj-compat-devel
-%endif
+BuildArch:      noarch
+Provides:       werken.xpath = %{epoch}:%{version}-%{release}
+Obsoletes:      werken.xpath < 0.9.4
 
 %description
 werken.xpath is an implementation of the W3C XPath Recommendation, on
@@ -83,10 +73,10 @@ werken.canonical (XML canonicalization) packages.
 
 %package        javadoc
 Summary:        Javadoc for %{name}
-Group:          Development/Java
-BuildRequires:  java-1.5.0-gcj-javadoc
-Provides:    werken.xpath-javadoc = %{epoch}:%{version}-%{release}
-Obsoletes:   werken.xpath-javadoc < %{epoch}:%{version}-%{release}
+
+BuildRequires:  java-javadoc
+Provides:       werken.xpath-javadoc = %{epoch}:%{version}-%{release}
+Obsoletes:      werken.xpath-javadoc < 0.9.4
 
 %description    javadoc
 Javadoc for %{name}.
@@ -94,33 +84,29 @@ Javadoc for %{name}.
 # -----------------------------------------------------------------------------
 
 %prep
-%setup -q -n %{dotname}
-%patch0 -p0 -b .sav
-%patch1 -p0 -b .sav
-%patch2 -p0 -b .sav
-%patch3 -p0 -b .sav
-%patch4 -p0 -b .sav
-%patch5 -p0 -b .sav
-%patch6 -p0 -b .sav
-%patch7 -p0 -b .sav
-%patch8 -p0 -b .sav
+%setup -q
+%patch0
+%patch1
+%patch2
+%patch3
+%patch4
+%patch5
+%patch6
+%patch7
+%patch8
 
 # remove all binary libs
 for j in $(find . -name "*.jar"); do
-	mv $j $j.no
+         mv $j $j.no
 done
 
-#pushd lib
-#ln -sf $(build-classpath antlr) antlr-runtime.jar
-#ln -sf $(build-classpath jdom) jdom.jar
-#ln -sf $(build-classpath xerces-j2) xerces.jar
-#popd
+cp %{SOURCE1} .
 
 # -----------------------------------------------------------------------------
 
 %build
 export CLASSPATH=$(build-classpath jdom antlr xerces-j2 xml-commons-apis)
-%{ant} -Dbuild.compiler=modern package javadoc compile-test
+ant -Dbuild.compiler=modern package javadoc compile-test
 # Note that you'll have to java in PATH for this to work, it is by default
 # when using a JPackage JVM.
 CLASSPATH=$CLASSPATH:build/werken.xpath.jar:build/test/classes
@@ -129,102 +115,101 @@ sh runtests.sh
 # -----------------------------------------------------------------------------
 
 %install
-rm -rf $RPM_BUILD_ROOT
-
 # jars
 mkdir -p $RPM_BUILD_ROOT%{_javadir}
-cp -p build/%{dotname}.jar $RPM_BUILD_ROOT%{_javadir}/%{name}-%{version}.jar
-(cd $RPM_BUILD_ROOT%{_javadir} && for jar in *-%{version}.jar; do ln -sf ${jar} `echo $jar| sed "s|-%{version}||g"`; done
-ln -sf %{name}.jar %{dotname}.jar)
-
-# pom
-mkdir -p $RPM_BUILD_ROOT%{_datadir}/maven2/default_poms
-cp %{SOURCE1} $RPM_BUILD_ROOT%{_datadir}/maven2/default_poms/JPP-werken-xpath.pom
-%add_to_maven_depmap %{name} %{name} %{version} JPP %{name}
+cp -p build/%{dotname}.jar $RPM_BUILD_ROOT%{_javadir}/%{name}.jar
 
 # javadoc
-mkdir -p $RPM_BUILD_ROOT%{_javadocdir}/%{name}-%{version}
-cp -pr build/apidocs/* $RPM_BUILD_ROOT%{_javadocdir}/%{name}-%{version}
-ln -s %{name}-%{version} $RPM_BUILD_ROOT%{_javadocdir}/%{name}
+mkdir -p $RPM_BUILD_ROOT%{_javadocdir}/%{name}
+cp -pr build/apidocs/* $RPM_BUILD_ROOT%{_javadocdir}/%{name}
+
+# maven
+install -d -m 755 $RPM_BUILD_ROOT%{_mavenpomdir}
+install -pm 644 %{name}-%{version}.pom \
+        $RPM_BUILD_ROOT%{_mavenpomdir}/JPP-%{name}.pom
+%add_maven_depmap JPP-%{name}.pom %{name}.jar
+
+
 # -----------------------------------------------------------------------------
 
-%if %{gcj_support}
-%{_bindir}/aot-compile-rpm
-%endif
-
-%clean
-rm -rf $RPM_BUILD_ROOT
-
-%post
-%update_maven_depmap
-%if %{gcj_support}
-%{update_gcjdb}
-%endif
-
-%postun
-%update_maven_depmap
-%if %{gcj_support}
-%{clean_gcjdb}
-%endif
-
 %files
-%defattr(0644,root,root,0755)
 %doc INSTALL LICENSE LIMITATIONS README TODO
 %{_javadir}/*
-%{_datadir}/maven2/default_poms/*
-%{_mavendepmapfragdir}
-
-%if %{gcj_support}
-%dir %{_libdir}/gcj/%{name}
-%attr(-,root,root) %{_libdir}/gcj/%{name}/werken-xpath-0.9.4.jar.*
-%endif
+%{_mavenpomdir}/JPP-%{name}.pom
+%{_mavendepmapfragdir}/%{name}
 
 %files javadoc
-%defattr(0644,root,root,0755)
-%{_javadocdir}/%{name}-%{version}
+%doc LICENSE
 %{_javadocdir}/%{name}
 
 # -----------------------------------------------------------------------------
 
-
 %changelog
-* Sat Dec 04 2010 Oden Eriksson <oeriksson@mandriva.com> 0:0.9.4-0.beta.13.0.0.4mdv2011.0
-+ Revision: 608164
-- rebuild
+* Wed Jul 31 2013 Stanislav Ochotnicky <sochotnicky@redhat.com> - 0:0.9.4-12.beta.12.5
+- Correct license tag to Saxpath
 
-* Wed Mar 17 2010 Oden Eriksson <oeriksson@mandriva.com> 0:0.9.4-0.beta.13.0.0.3mdv2010.1
-+ Revision: 524314
-- rebuilt for 2010.1
+* Tue Jul 30 2013 Stanislav Ochotnicky <sochotnicky@redhat.com> - 0:0.9.4-11.beta.12.5
+- Provide script to generate clean tarball
 
-* Fri Dec 21 2007 Olivier Blin <oblin@mandriva.com> 0:0.9.4-0.beta.13.0.0.2mdv2009.0
-+ Revision: 136572
-- restore BuildRoot
+* Fri Jun 28 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 0:0.9.4-10.beta.12.5
+- Rebuild to regenerate API documentation
+- Resolves: CVE-2013-1571
 
-  + Thierry Vignaud <tv@mandriva.org>
-    - kill re-definition of %%buildroot on Pixel's request
+* Fri Feb 15 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0:0.9.4-10.beta.12.4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_19_Mass_Rebuild
 
-* Sun Dec 16 2007 Anssi Hannula <anssi@mandriva.org> 0:0.9.4-0.beta.13.0.0.2mdv2008.1
-+ Revision: 121045
-- buildrequire java-rpmbuild, i.e. build with icedtea on x86(_64)
+* Wed Dec 12 2012 Michal Srb <msrb@redhat.com> - 0:0.9.4-9.beta.12.4
+- Fixed name of the POM file (resolves: #655826)
+- Moved from add_to_maven_depmap to add_maven_depmap
+- Spec file cleanup
 
-* Wed Dec 12 2007 Alexander Kurtakov <akurtakov@mandriva.org> 0:0.9.4-0.beta.13.0.0.1mdv2008.1
-+ Revision: 117708
-- add maven poms (jpp sync)
+* Sun Jul 22 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0:0.9.4-8.beta.12.4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_18_Mass_Rebuild
 
-* Sat Sep 15 2007 Anssi Hannula <anssi@mandriva.org> 0:0.9.4-0.beta.12.0.0.2mdv2008.0
-+ Revision: 87246
-- rebuild to filter out autorequires of GCJ AOT objects
-- remove unnecessary Requires(post) on java-gcj-compat
-- fix obsoletes on werken.xpath
+* Sat Jan 14 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0:0.9.4-7.beta.12.4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_17_Mass_Rebuild
 
-* Tue Sep 04 2007 David Walluck <walluck@mandriva.org> 0:0.9.4-0.beta.12.0.0.1mdv2008.0
-+ Revision: 78968
-- Import werken-xpath
+* Mon Feb 07 2011 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0:0.9.4-6.beta.12.4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_15_Mass_Rebuild
 
+* Thu Dec 30 2010 Alexander Kurtakov <akurtako@redhat.com> 0:0.9.4-5.beta.12.4
+- Drop gcj support.
+- No more versioned jars/javadoc.
 
+* Sat Feb 13 2010 Mary Ellen Foster <mefoster at gmail.com> - 0:0.9.4-5.beta.12.3
+- Add maven dependency information
+
+* Mon Aug 10 2009 Ville Skyttä <ville.skytta@iki.fi> - 0:0.9.4-4.beta.12.3
+- Convert specfile to UTF-8.
+
+* Mon Jul 27 2009 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0:0.9.4-3.beta.12.3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_12_Mass_Rebuild
+
+* Wed Feb 25 2009 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0:0.9.4-2.beta.12.3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_11_Mass_Rebuild
+
+* Thu Jul 10 2008 Tom "spot" Callaway <tcallawa@redhat.com> - 0:0.9.4-1.beta.12.3
+- drop repotag
+- fix license tag
+
+* Mon Feb 18 2008 Fedora Release Engineering <rel-eng@fedoraproject.org> - 0:0.9.4-1.beta.12jpp.2
+- Autorebuild for GCC 4.3
+
+* Tue Mar 20 2007 Florian La Roche <laroche@redhat.com> 0:0.9.4-0.beta.12jpp.2
+- change Provides:/Obsoletes: to standard way of epoch:version-release
+
+* Fri Aug 18 2006 Fernando Nasser <fnasser@redhat.com> 0:0.9.4-0.beta.12jpp.1
+- Merge with upstream
+- Re-add define gcj_support
 
 * Fri Aug 18 2006 Fernando Nasser <fnasser@redhat.com> 0:0.9.4-0.beta.12jpp
 - Add requires for post and postun javadoc sections
+
+* Thu Aug 03 2006 Fernando Nasser <fnasser@redhat.com> 0:0.9.4-0.beta.11jpp_2fc
+- Remove define gcj_support and rebuild
+
+* Tue Jul 25 2006 Fernando Nasser <fnasser@redhat.com> 0:0.9.4-0.beta.11jpp_1fc
+- Merge with upstream
 
 * Tue Jul 25 2006 Fernando Nasser <fnasser@redhat.com> 0:0.9.4-0.beta.11jpp
 - Add missing header
@@ -238,7 +223,7 @@ rm -rf $RPM_BUILD_ROOT
 * Thu Jan 22 2004 David Walluck <david@anti-microsoft.org> 0:0.9.4-0.beta.8jpp
 - use oldjdom
 
-* Sun May 25 2003 Ville Skyttä <ville.skytta at iki.fi> - 0:0.9.4-0.beta.7jpp
+* Sun May 25 2003 Ville Skyttä <ville.skytta@iki.fi> - 0:0.9.4-0.beta.7jpp
 - Add Epochs to dependencies.
 - Add non-versioned javadoc symlinks.
 - Add Distribution tag.
@@ -246,7 +231,7 @@ rm -rf $RPM_BUILD_ROOT
 * Fri May 23 2003 Richard Bullington-McGuire <rbulling@pkrinternet.com> - 0.9.4-0.beta.6jpp
 - Reworked spec file for JPackage 1.5 release
 
-* Sun Mar  2 2003 Ville Skyttä <ville.skytta at iki.fi> - 0.9.4-0.beta.5jpp
+* Sun Mar  2 2003 Ville Skyttä <ville.skytta@iki.fi> - 0.9.4-0.beta.5jpp
 - Fix Group, License and Distribution tags.
 - Patched to work with recent JDOM versions.
 - Run unit tests during build.
