@@ -33,9 +33,10 @@
 
 Name:           werken-xpath
 Version:        0.9.4
-Release:        12.beta.12.5.1%{?dist}
+Release:        13.beta.12.7.1
 Epoch:          0
 Summary:        XPath implementation using JDOM
+Group:          Development/Java
 License:        Saxpath
 Source0:        %{name}-%{version}.tar.xz
 Source1:        http://repo1.maven.org/maven2/%{name}/%{name}/%{version}/%{name}-%{version}.pom
@@ -127,16 +128,13 @@ cp -pr build/apidocs/* $RPM_BUILD_ROOT%{_javadocdir}/%{name}
 install -d -m 755 $RPM_BUILD_ROOT%{_mavenpomdir}
 install -pm 644 %{name}-%{version}.pom \
         $RPM_BUILD_ROOT%{_mavenpomdir}/JPP-%{name}.pom
-%add_maven_depmap JPP-%{name}.pom %{name}.jar
+%add_maven_depmap
 
 
 # -----------------------------------------------------------------------------
 
-%files
+%files -f .mfiles
 %doc INSTALL LICENSE LIMITATIONS README TODO
-%{_javadir}/*
-%{_mavenpomdir}/JPP-%{name}.pom
-%{_mavendepmapfragdir}/%{name}
 
 %files javadoc
 %doc LICENSE
