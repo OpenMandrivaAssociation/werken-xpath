@@ -51,7 +51,7 @@ Patch5:         %{name}-StringFunction.patch
 Patch6:         %{name}-Test.patch
 Patch7:         %{name}-Driver.patch
 Patch8:         %{name}-runtests_sh.patch
-URL:            http://sourceforge.net/projects/werken-xpath/
+URL:            https://sourceforge.net/projects/werken-xpath/
 Requires:       jdom
 BuildRequires:  ant >= 0:1.6
 BuildRequires:  antlr
